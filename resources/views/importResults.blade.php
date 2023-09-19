@@ -11,9 +11,20 @@
             Imported records counter: {{ $counter }}
         </div>
         <div>
-            @foreach($refusedArray as $reason => $amount)
-                <p>{{ $reason . ': ' . $amount }}</p>
+            Failed to import records counter: {{ count($refusedToImport) }}
+        </div>
+        <div style="color:red;">
+            @foreach($refusedToImport as $row => $failures)
+                <p>Row {{ $row }}</p>
+                @foreach($failures as $failure)
+                    <ul>
+                        @foreach ($failure->errors() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                @endforeach
             @endforeach
+{{--            I know that 3 nested loops is not good solution. It is just for output convenience --}}
         </div>
     </body>
 </html>

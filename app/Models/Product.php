@@ -21,7 +21,9 @@ class Product extends Model
         'sku',
         'description',
         'price',
+        'warranty',
         'is_available',
+        'category_id',
     ];
 
     /**
