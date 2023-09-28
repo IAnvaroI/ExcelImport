@@ -4,6 +4,8 @@ namespace App\Imports;
 
 use App\Models\Category;
 use App\Models\Product;
+use Barryvdh\Debugbar\Facades\Debugbar;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
@@ -18,16 +20,35 @@ class ProductsImport implements ToModel, WithUpserts, WithChunkReading, WithBatc
 {
     use Importable, SkipsFailures;
 
+    private Collection $categories;
+
+    function __construct()
+    {
+        $this->categories = Category::all();
+    }
+
     /**
      * @param array $row
      * @return Product|null
      */
     public function model(array $row): ?Product
     {
-        $category = Category::firstOrCreate([
-            'rubric' => $row[1],
-            'name' => $row[2],
-        ]); // TODO take 2/3 of runtime, should be replaced by one query and multiple comparisons
+        $is_present = $this->categories->search(function (Category $item, int $key) use ($row) {
+            return $item->name == $row[2] && $item->rubric == $row[1];
+        });
+
+        Debugbar::debug($is_present);
+
+        if ($is_present === false) {
+            $category = Category::create([
+                'rubric' => $row[1],
+                'name' => $row[2],
+            ]);
+
+            $this->categories->push($category);
+        } else {
+            $category = $this->categories->get($is_present);
+        }
 
         Session::put('importTotalRows', Session::get('importTotalRows') + 1);
 
